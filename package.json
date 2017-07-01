@@ -1,0 +1,31 @@
+{
+  "name": "jquery.loading.progressive",
+  "version": "1.0.1",
+  "description": "A JavaScript library to lazy loading images progressive for optimize web performance",
+  "main": "dist/jquery.loading.progressive.min.js",
+  "scripts": {
+    "lint": "standard \"src/**/*.js\"",
+    "build:css": "cssnano src/jquery.loading.progressive.css dist/jquery.loading.progressive.min.css",
+    "build:js": "uglifyjs src/jquery.loading.progressive.js -cm -o dist/jquery.loading.progressive.min.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sonbuiGFD/jquery.loading.progressive.git"
+  },
+  "keywords": [
+    "autocomplete",
+    "haravan",
+    "search"
+  ],
+  "author": "son_bui_",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/sonbuiGFD/jquery.loading.progressive/issues"
+  },
+  "homepage": "https://github.com/sonbuiGFD/jquery.loading.progressive/blob/master/README.md",
+  "devDependencies": {
+    "cssnano-cli": "^1.0.5",
+    "standard": "^10.0.2",
+    "uglify-js": "^3.0.22"
+  }
+}
