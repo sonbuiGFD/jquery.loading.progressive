@@ -1,6 +1,4 @@
 ;(function($, window, undefined) {
-  'use strict';
-
   var pluginName = 'load-progressive',
     checkPoint;
 
@@ -11,6 +9,14 @@
   function getClientWidth () {
     return Math.max(document.documentElement.clientWidth, window.innerWidth, $(window).width())
   }
+/**
+ * Checks, if element is hidden
+ * @param  object DOMElement
+ * @return {Boolean}    [description]
+ */
+  function isHidden (el) {
+    return (el.offsetParent === null)
+  }
 
 /**
  * Check if element is currently visible
@@ -20,6 +26,9 @@
   function inView(el) {
     if (typeof jQuery === "function" && el instanceof jQuery) {
         el = el[0];
+    }
+    if (isHidden(el)) {
+      return false
     }
     var rect = el.getBoundingClientRect();
     return (
@@ -73,7 +82,7 @@
     this.element = $(element);
     this.options = $.extend({}, $.fn[pluginName].defaults, this.element.data(), options);
     this.init();
-    $(window).on('DOMContentLoaded load resize scroll', this.check);
+    $(window).on('DOMContentLoaded load resize.progressive scroll.progressive', this.check.bind(this));
   }
 
   Plugin.prototype = {
@@ -93,6 +102,7 @@
       }, that.options.throttle);
     },
     destroy: function() {
+      $(window).off('resize.progressive scroll.progressive', this.check.bind(this));
       $.removeData(this.element[0], pluginName);
     }
   };
@@ -112,7 +122,9 @@
     nodeClass: '.progressive__img',
     throttle: 300,
     delay: 100,
-    onLoad: function() {},
+    onLoad: function() {
+      $(window).resize();
+    },
     breakPointSM: 767
   };
 
