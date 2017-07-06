@@ -10,15 +10,6 @@
     return Math.max(document.documentElement.clientWidth, window.innerWidth, $(window).width())
   }
 /**
- * Checks, if element is hidden
- * @param  object DOMElement
- * @return {Boolean}    [description]
- */
-  function isHidden (el) {
-    return (el.offsetParent === null)
-  }
-
-/**
  * Check if element is currently visible
  * @param  object DOMElement
  * @return boolean
@@ -27,15 +18,11 @@
     if (typeof jQuery === "function" && el instanceof jQuery) {
         el = el[0];
     }
-    if (isHidden(el)) {
-      return false
-    }
     var rect = el.getBoundingClientRect();
     return (
-        rect.top >= 0 &&
-        rect.left >= 0 &&
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight || $(window).height()) &&
-        rect.right <= (window.innerWidth || document.documentElement.clientWidth || $(window).width())
+        rect.top >= 0 ||
+        rect.left >= 0 ||
+        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight || $(window).height())
     );
   }
 
@@ -70,12 +57,16 @@
  * @param  object defaults
  * @return void function
  */
-  function render(nodes, options) {
+  function render(nodes, options, that) {
     nodes.each(function (index, elem) {
       if (inView(elem) && $(elem).hasClass('progressive--not-loaded')) {
         loadImage(elem, options);
       }
     });
+    if(!nodes.length){
+      options.onComplete();
+      that.destroy();
+    }
   }
 
   function Plugin(element, options) {
@@ -88,7 +79,7 @@
   Plugin.prototype = {
     init: function() {
       this.nodes = this.element.find(this.options.nodeClass);
-      render(this.nodes, this.options);
+      render(this.nodes, this.options, this);
     },
     check: function () {
       var that = this;
@@ -102,7 +93,7 @@
       }, that.options.throttle);
     },
     destroy: function() {
-      $(window).off('resize.progressive scroll.progressive', this.check.bind(this));
+      $(window).off('resize.progressive scroll.progressive');
       $.removeData(this.element[0], pluginName);
     }
   };
@@ -119,10 +110,13 @@
   };
 
   $.fn[pluginName].defaults = {
-    nodeClass: '.progressive__img',
+    nodeClass: '.progressive__img.progressive--not-loaded',
     throttle: 300,
     delay: 100,
     onLoad: function() {
+      $(window).resize();
+    },
+    onComplete: function () {
       $(window).resize();
     },
     breakPointSM: 767
