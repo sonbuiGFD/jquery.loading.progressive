@@ -1,43 +1,53 @@
 ;(function($, window, undefined) {
   var pluginName = 'load-progressive',
     checkPoint;
-
-/**
- * Returns the width of the client's viewport
- * @return integer client-width
- */
-  function getClientWidth () {
+  /**
+   * Checks, if element is hidden
+   * @param  object DOMElement
+   * @return {Boolean}    [description]
+   */
+  function isHidden(el) {
+    return (el.offsetParent === null)
+  }
+  /**
+   * Returns the width of the client's viewport
+   * @return integer client-width
+   */
+  function getClientWidth() {
     return Math.max(document.documentElement.clientWidth, window.innerWidth, $(window).width())
   }
-/**
- * Check if element is currently visible
- * @param  object DOMElement
- * @return boolean
- */
+  /**
+   * Check if element is currently visible
+   * @param  object DOMElement
+   * @return boolean
+   */
   function inView(el) {
     if (typeof jQuery === "function" && el instanceof jQuery) {
-        el = el[0];
+      el = el[0];
+    }
+    if (isHidden(el)) {
+      return false
     }
     var rect = el.getBoundingClientRect();
     return (
-        rect.top >= 0 ||
-        rect.left >= 0 ||
-        rect.bottom <= (window.innerHeight || document.documentElement.clientHeight || $(window).height())
+      rect.left >= 0 &&
+      rect.top >= 0 &&
+      rect.bottom <= (window.innerHeight || document.documentElement.clientHeight || $(window).height()) &&
+      rect.right <= (window.innerWidth || document.documentElement.clientWidth || $(window).width())
     );
   }
-
-/**
- * Load image and add loaded-class.
- * @param  object DOMElement
- * @param  object defaults
- * @return void function
- */
+  /**
+   * Load image and add loaded-class.
+   * @param  object DOMElement
+   * @param  object defaults
+   * @return void function
+   */
   function loadImage(el, options) {
     setTimeout(function() {
       var img = new Image();
       img.onload = function() {
         $(el).removeClass('progressive--not-loaded')
-        .addClass('progressive--is-loaded');
+          .addClass('progressive--is-loaded');
         el.src = this.src;
         options.onLoad(el);
       }
@@ -48,30 +58,29 @@
         return;
       }
       img.src = $(el).data('progressive');
-    }, options.delay);
+    }, 0);
   }
-
-/**
- * Load image list.
- * @param  object List DOMElement
- * @param  object defaults
- * @return void function
- */
+  /**
+   * Load image list.
+   * @param  object List DOMElement
+   * @param  object defaults
+   * @return void function
+   */
   function render(nodes, options, that) {
-    nodes.each(function (index, elem) {
-      if (inView(elem) && $(elem).hasClass('progressive--not-loaded')) {
+    nodes.each(function(index, elem) {
+      if ((inView(elem) && $(elem).hasClass('progressive--not-loaded')) || that.timeout) {
         loadImage(elem, options);
       }
     });
-    if(!nodes.length){
-      options.onComplete();
+    if (!nodes.length) {
       that.destroy();
     }
   }
-
   function Plugin(element, options) {
     this.element = $(element);
     this.options = $.extend({}, $.fn[pluginName].defaults, this.element.data(), options);
+    this.timeout = false;
+    this.checkTimeOut();
     this.init();
     $(window).on('DOMContentLoaded load resize.progressive scroll.progressive', this.check.bind(this));
   }
@@ -81,16 +90,22 @@
       this.nodes = this.element.find(this.options.nodeClass);
       render(this.nodes, this.options, this);
     },
-    check: function () {
+    check: function() {
       var that = this;
       if (checkPoint) {
         return;
       }
       clearTimeout(checkPoint);
-      checkPoint = setTimeout(function () {
+      checkPoint = setTimeout(function() {
         that.init()
         checkPoint = null
       }, that.options.throttle);
+    },
+    checkTimeOut: function() {
+      var that = this;
+      setTimeout(function() {
+        that.timeout = true;
+      }, that.options.timeOut)
     },
     destroy: function() {
       $(window).off('resize.progressive scroll.progressive');
@@ -116,10 +131,8 @@
     onLoad: function() {
       $(window).resize();
     },
-    onComplete: function () {
-      $(window).resize();
-    },
-    breakPointSM: 767
+    breakPointSM: 767,
+    timeOut: 10000
   };
 
   $(function() {
