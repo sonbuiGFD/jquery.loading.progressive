@@ -1,6 +1,7 @@
 ;(function($, window, undefined) {
   var pluginName = 'load-progressive',
     checkPoint;
+
   /**
    * Checks, if element is hidden
    * @param  object DOMElement
@@ -36,6 +37,27 @@
       rect.right <= (window.innerWidth || document.documentElement.clientWidth || $(window).width())
     );
   }
+
+  /**
+   * debound function for optimize perf
+   */
+  
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+        var context = this,
+            args = arguments;
+        var later = function() {
+            timeout = null;
+            if (!immediate) func.apply(context, args);
+        };
+        var callNow = immediate && !timeout;
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+        if (callNow) func.apply(context, args);
+    };
+  };
+
   /**
    * Load image and add loaded-class.
    * @param  object DOMElement
@@ -82,7 +104,8 @@
     this.timeout = false;
     this.checkTimeOut();
     this.init();
-    $(window).on('DOMContentLoaded load resize.progressive scroll.progressive', this.check.bind(this));
+    $(window).on('DOMContentLoaded resize.progressive scroll.progressive',
+    debounce(this.check.bind(this), 300));
   }
 
   Plugin.prototype = {
@@ -105,6 +128,7 @@
       var that = this;
       setTimeout(function() {
         that.timeout = true;
+        that.init();
       }, that.options.timeOut)
     },
     destroy: function() {
